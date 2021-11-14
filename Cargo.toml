@@ -1,0 +1,21 @@
+[package]
+name = "yuna"
+version = "0.1.0"
+edition = "2021"
+description = "Naive terminal variables manager."
+homepage = "https://sw.cowtech.it/yuna"
+repository = "https://github.com/ShogunPanda/yuna"
+license = "ISC"
+keywords = ["terminal"]
+categories = ["command-line-utilities", "command-line-interface", "template-engine"]
+
+[dependencies]
+clap = "^2.33.0"
+comfy-table = "^5.0.0"
+handlebars = "^4.1.4"
+serde = "^1.0.0"
+serde_yaml = "^0.8.0"
+tempera = "^0.1.0"
+
+[profile.release]
+lto = true
