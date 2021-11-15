@@ -1,6 +1,7 @@
 # yuna
 
-<!-- TODO@PI: Add badges -->
+[![Version](https://img.shields.io/crates/v/yuna.svg)](https://crates.io/crates/yuna)
+[![Dependencies](https://img.shields.io/librariesio/release/cargo/yuna)](https://libraries.io/cargo/yuna)
 
 Naive terminal variables manager.
 
@@ -22,10 +23,10 @@ cargo install yuna
 # If run without arguments, it will list all available variables in that folder.
 yuna
 
-# If run with more than an argument, it will write a variable
+# If run with more than an argument, it will write a variable,
 yuna foo bar baz
 
-# If run with a argument, it will read a variable
+# If run with a argument, it will read a variable.
 yuna foo
 ```
 
