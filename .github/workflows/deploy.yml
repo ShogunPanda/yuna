@@ -1,0 +1,38 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  sanity:
+    name: Sanity Check
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Restore cached dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo
+          key: cargo-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Check build
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+      - name: Lint code
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
+      - name: Analyze code
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
