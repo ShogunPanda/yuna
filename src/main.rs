@@ -10,7 +10,7 @@ use std::process::exit;
 fn append_mapping<'a>(mapping: &'a mut Mapping, key: &Value) -> &'a mut Mapping {
   mapping.insert(key.clone(), Mapping::new().into());
 
-  mapping.get_mut(&key).unwrap().as_mapping_mut().unwrap()
+  mapping.get_mut(key).unwrap().as_mapping_mut().unwrap()
 }
 
 fn merge_mappings(destination: &mut Mapping, source: &Mapping) {
@@ -40,7 +40,7 @@ fn merge_mappings(destination: &mut Mapping, source: &Mapping) {
   }
 }
 
-fn enumerate_values<'b>(values: &'b mut Vec<(String, String)>, old_path: Vec<String>, current: &Value) {
+fn enumerate_values(values: &mut Vec<(String, String)>, old_path: Vec<String>, current: &Value) {
   match current {
     Value::Mapping(m) => {
       for (key, value) in m {
@@ -60,16 +60,16 @@ fn enumerate_values<'b>(values: &'b mut Vec<(String, String)>, old_path: Vec<Str
     }
     // Add the value
     Value::Bool(b) => {
-      values.push((old_path.join(".").into(), b.to_string()));
+      values.push((old_path.join("."), b.to_string()));
     }
     Value::Number(n) => {
-      values.push((old_path.join(".").into(), n.to_string()));
+      values.push((old_path.join("."), n.to_string()));
     }
     Value::String(s) => {
-      values.push((old_path.join(".").into(), s.into()));
+      values.push((old_path.join("."), s.into()));
     }
     _ => {
-      values.push((old_path.join(".").into(), "null".into()));
+      values.push((old_path.join("."), "null".into()));
     }
   }
 }
@@ -83,7 +83,7 @@ fn resolve_value(template: &str, values: &Mapping, raw: bool, level: u8) -> Opti
         resolve_value(&result, values, raw, level + 1)
       // Return the result
       } else if !result.is_empty() {
-        Some(format!("{}", result))
+        Some(result)
       } else {
         None
       }
@@ -106,7 +106,7 @@ fn get_value(values: &Mapping, name: &str, raw: bool) -> String {
   template.insert_str(0, "{{");
   template.push_str("}}");
 
-  resolve_value(&template, &values, raw, 0).unwrap_or(String::from(""))
+  resolve_value(&template, values, raw, 0).unwrap_or_else(String::new)
 }
 
 fn list_files(cwd: PathBuf, config: &str) -> Vec<PathBuf> {
@@ -162,7 +162,7 @@ fn load_values(config: &str, no_merge: bool) -> Mapping {
 
   // Get values from file
   if no_merge {
-    let file_values = load_file(cwd.join(config).clone());
+    let file_values = load_file(cwd.join(config));
     merge_mappings(&mut values, &file_values);
   } else {
     // For each file, load values and merge them
@@ -249,7 +249,7 @@ fn write_value(config: &str, name: &str, value: &str, delete: bool) {
   let mut current_mapping = &mut contents;
 
   // Split the name and make sure the right structure is present
-  let mut tokens = name.split(".").peekable();
+  let mut tokens = name.split('.').peekable();
   let mut final_key: Value = String::from("").into();
 
   while let Some(token) = tokens.next() {
@@ -320,8 +320,8 @@ fn main() {
   let value = matches.values_of("value");
 
   // Perform the request action
-  if value.is_some() {
-    let values = &value.unwrap().collect::<Vec<&str>>().join(" ");
+  if let Some(all_values) = value {
+    let values = &all_values.collect::<Vec<&str>>().join(" ");
     write_value(config, name, values, delete);
   } else if !name.is_empty() {
     read_value(config, name, raw, no_merge);
