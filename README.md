@@ -9,9 +9,23 @@ https://sw.cowtech.it/yuna
 
 ## Install
 
-<!-- TODO@PI: Release binaries for the same platform of Fishaminum, plus Mac M1, using GitHub Actions no local install is necessary -->
+Download one of the prebuilt binaries for your platform, then make it executable:
 
-Make sure you have a Rust installation locally, then run:
+- [Linux](https://github.com/ShogunPanda/yuna/releases/latest/download/yuna-linux)
+- [macOS (Intel)](https://github.com/ShogunPanda/yuna/releases/latest/download/yuna-macos-intel)
+- [macOS (Apple M1)](https://github.com/ShogunPanda/yuna/releases/latest/download/yuna-macos-arm)
+- [Windows](https://github.com/ShogunPanda/yuna/releases/latest/download/yuna.exe)
+
+Example:
+
+```sh
+curl -L -o yuna https://github.com/ShogunPanda/yuna/releases/latest/download/yuna-linux
+chmod a+x yuna
+```
+
+## Install (other platforms)
+
+If your platform is not available or you don't want to use the binaries above, make sure you have a Rust installation locally, then run:
 
 ```sh
 cargo install yuna

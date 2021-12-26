@@ -38,3 +38,94 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+  versionCheck:
+    name: Check version
+    runs-on: ubuntu-latest
+    needs: sanity
+    outputs:
+      build: ${{ steps.check.outputs.build }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - id: check
+        name: Check version
+        run: |
+          VERSION=$(cargo read-manifest | jq -r .version)
+          gh release view v$VERSION || echo "::set-output name=build::true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build:
+    name: Build (${{ matrix.os }})
+    needs: versionCheck
+    if: ${{ needs.versionCheck.outputs.build == 'true' }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu
+          - macos
+          - windows
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: aarch64-apple-darwin
+      - name: Build executable (${{ matrix.os }})
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Build executable (macos-arm)
+        if: ${{ matrix.os == 'macos' }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target=aarch64-apple-darwin
+      - uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'ubuntu' }}
+        with:
+          name: linux
+          path: ./target/release/yuna
+      - uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'macos' }}
+        with:
+          name: macos-intel
+          path: ./target/release/yuna
+      - uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'macos' }}
+        with:
+          name: macos-arm
+          path: ./target/aarch64-apple-darwin/release/yuna
+      - uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'windows' }}
+        with:
+          name: windows
+          path: .\target\release\yuna.exe
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - name: Create release
+        run: |
+          VERSION=$(cargo read-manifest | jq -r .version)
+          mkdir release
+          mv artifacts/linux/yuna release/yuna-linux
+          mv artifacts/macos-intel/yuna release/yuna-macos-intel
+          mv artifacts/macos-arm/yuna release/yuna-macos-arm
+          mv artifacts/windows/yuna.exe release/yuna-windows.exe
+          gh release create -t $VERSION v$VERSION release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
