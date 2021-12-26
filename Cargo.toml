@@ -1,6 +1,6 @@
 [package]
 name = "yuna"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Naive terminal variables manager."
 homepage = "https://sw.cowtech.it/yuna"
