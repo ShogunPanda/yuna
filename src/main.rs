@@ -106,7 +106,7 @@ fn get_value(values: &Mapping, name: &str, raw: bool) -> String {
   template.insert_str(0, "{{{");
   template.push_str("}}}");
 
-  resolve_value(&template, values, raw, 0).unwrap_or_else(String::new)
+  resolve_value(&template, values, raw, 0).unwrap_or_default()
 }
 
 fn list_files(cwd: PathBuf, config: &str) -> Vec<PathBuf> {
