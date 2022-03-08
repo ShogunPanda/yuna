@@ -103,8 +103,8 @@ fn resolve_value(template: &str, values: &Mapping, raw: bool, level: u8) -> Opti
 fn get_value(values: &Mapping, name: &str, raw: bool) -> String {
   // Always assume it's a handlerbars template
   let mut template = String::from(name);
-  template.insert_str(0, "{{");
-  template.push_str("}}");
+  template.insert_str(0, "{{{");
+  template.push_str("}}}");
 
   resolve_value(&template, values, raw, 0).unwrap_or_else(String::new)
 }
@@ -221,8 +221,8 @@ fn read_value(config: &str, name: &str, raw: bool, no_merge: bool) {
   let mut template = String::from(name);
 
   if !template.contains("{{") {
-    template.insert_str(0, "{{");
-    template.push_str("}}");
+    template.insert_str(0, "{{{");
+    template.push_str("}}}");
   }
 
   // Resolve the value, then print it
