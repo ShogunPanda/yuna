@@ -18,7 +18,10 @@ jobs:
       - name: Restore cached dependencies
         uses: actions/cache@v3
         with:
-          path: ~/.cargo
+          path:
+            - ~/.cargo/registry
+            - ~/.cargo/git
+            - target
           key: cargo-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Build
         run: cargo build
