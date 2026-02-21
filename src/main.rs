@@ -33,6 +33,11 @@ fn show_value(opts: &Args, name: &str) -> Result<(), Error> {
 fn list_values(opts: &Args) -> Result<(), Error> {
   let values = read_configuration_files(opts)?;
 
+  if values.is_empty() {
+    println!("No variables found.");
+    return Ok(());
+  }
+
   // Build and show the table
   let mut table = Table::new();
   table

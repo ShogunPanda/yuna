@@ -76,6 +76,6 @@ jobs:
           chmod +x release/yuna-linux release/yuna-macos-intel release/yuna-macos-arm
       - name: Create GitHub Release
         run: |
-          gh release create "v${{ inputs.version }}" ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} release/*
+          gh release create "v${{ inputs.version }}" -t "${{ inputs.version }}" ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
