@@ -20,7 +20,9 @@ jobs:
         with:
           path: ~/.cargo
           key: cargo-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install cargo-make
-        run: cargo install cargo-make
-      - name: Run checks
-        run: cargo make prebuild
+      - name: Build
+        run: cargo build
+      - name: Format
+        run: cargo fmt --check
+      - name: Lint
+        run: cargo clippy -- -D warnings
