@@ -4,18 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'The version number to tag and release'
+        description: "The version number to tag and release"
         required: true
         type: string
       prerelease:
-        description: 'Release as pre-release'
+        description: "Release as pre-release"
         required: false
         type: boolean
         default: false
 
 jobs:
   build:
-    name: Build (${{ matrix.os }})
     strategy:
       matrix:
         include:
@@ -35,7 +34,7 @@ jobs:
             os: macos-13
             artifact: yuna-macos-intel
             path: target/release/yuna
-    name: 'Build (${{ matrix.name }})'
+    name: "Build (${{ matrix.name }})"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -72,6 +71,6 @@ jobs:
           chmod +x release/yuna-linux release/yuna-macos-intel release/yuna-macos-arm
       - name: Create GitHub Release
         run: |
-          gh release create "v${{ inputs.version }}" ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} release/*          
+          gh release create "v${{ inputs.version }}" ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
