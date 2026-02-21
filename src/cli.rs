@@ -3,7 +3,10 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(version, about, disable_version_flag = true)]
 pub struct Args {
+  #[arg(skip)]
   pub cwd: std::path::PathBuf,
+
+  #[arg(skip)]
   pub home: String,
 
   #[arg(short, long, default_value = ".yuna.yml", help = "The configuration file name")]
