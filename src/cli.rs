@@ -1,7 +1,7 @@
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[command(version, about, disable_version_flag = true)]
+#[command(version, about)]
 pub struct Args {
   #[arg(skip)]
   pub cwd: std::path::PathBuf,
@@ -26,7 +26,4 @@ pub struct Args {
 
   #[arg(help = "The value to add/overwrite", num_args = 0..)]
   pub value: Vec<String>,
-
-  #[arg(short = 'V', help = "Print version")]
-  pub version: bool,
 }

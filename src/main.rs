@@ -91,14 +91,24 @@ fn list_values(opts: &Args) -> Result<(), Error> {
 }
 
 fn main() -> Result<()> {
-  let mut opts = Args::try_parse().context("Invalid arguments provided.")?;
+  let mut opts = match Args::try_parse() {
+    Ok(opts) => opts,
+    Err(e) => match e.kind() {
+      clap::error::ErrorKind::DisplayVersion => {
+        println!("{}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+      }
+      _ => {
+        e.print()?; // prints help/version exactly as clap wants
+        return Ok(()); // clean exit code 0
+      }
+    },
+  };
 
   opts.cwd = std::env::current_dir()?;
   opts.home = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE"))?; // Linux or Windows
 
-  if opts.version {
-    println!("{}", env!("CARGO_PKG_VERSION"));
-  } else if opts.delete {
+  if opts.delete {
     let mut file = read_current_configuration_file(&opts).context("Cannot read configuration file")?;
     delete_value(&opts, &mut file).context("Cannot delete value")?;
     write_current_configuration_file(&opts, &file).context("Cannot write configuration file")?;

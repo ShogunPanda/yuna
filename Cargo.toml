@@ -1,6 +1,6 @@
 [package]
   name = "yuna"
-  version = "0.3.0"
+  version = "0.3.1"
   edition = "2024"
   description = "Naive terminal variables manager."
   homepage = "https://sw.cowtech.it/yuna"
@@ -19,6 +19,7 @@
     "std",
     "derive",
     "error-context",
+    "help",
   ] }
   comfy-table = { version = "7.2.2" }
   regex = { version = "1.12.3" }
