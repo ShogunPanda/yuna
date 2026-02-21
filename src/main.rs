@@ -99,8 +99,7 @@ fn main() -> Result<()> {
         return Ok(());
       }
       _ => {
-        e.print()?; // prints help/version exactly as clap wants
-        return Ok(()); // clean exit code 0
+        e.exit();
       }
     },
   };
