@@ -1,0 +1,17 @@
+[tasks.prebuild]
+  dependencies = ["format", "lint"]
+
+[tasks.check]
+  dependencies = ["format", "lint"]
+
+[tasks.format]
+  command = "cargo"
+  args    = ["fmt"]
+
+[tasks.lint]
+  command = "cargo"
+  args    = ["clippy"]
+
+[tasks."lint:fix"]
+  command = "cargo"
+  args    = ["clippy", "--fix", "--allow-dirty"]

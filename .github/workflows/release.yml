@@ -27,36 +27,13 @@ jobs:
           profile: minimal
           toolchain: stable
           components: rustfmt, clippy
+      - name: Install cargo-make
+        run: cargo install cargo-make
       - name: Check build
         uses: actions-rs/cargo@v1
         with:
-          command: check
-      - name: Lint code
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: -- --check
-      - name: Analyze code
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
-  versionCheck:
-    name: Check version
-    runs-on: ubuntu-latest
-    needs: sanity
-    outputs:
-      build: ${{ steps.check.outputs.build }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - id: check
-        name: Check version
-        run: |
-          VERSION=$(cargo read-manifest | jq -r .version)
-          gh release view v$VERSION || echo "::set-output name=build::true"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          command: make
+          args: prebuild
   build:
     name: Build (${{ matrix.os }})
     needs: versionCheck
@@ -68,8 +45,6 @@ jobs:
           - macos
           - windows
     runs-on: ${{ matrix.os }}-latest
-    env:
-      CARGO_TERM_COLOR: always
     steps:
       - name: Checkout
         uses: actions/checkout@v3

@@ -69,12 +69,12 @@ fn list_values(opts: &Args) -> Result<(), Error> {
 
     let interpolated = match opts.raw {
       true => Cow::Borrowed(value),
-      false => Cow::Owned(interpolate(&values, &value)?),
+      false => Cow::Owned(interpolate(&values, value)?),
     };
 
     table.add_row(vec![
-      Cell::new(&name).fg(Color::Cyan).add_attribute(Attribute::Bold),
-      Cell::new(&value).fg(Color::Green).add_attribute(Attribute::Bold),
+      Cell::new(name).fg(Color::Cyan).add_attribute(Attribute::Bold),
+      Cell::new(value).fg(Color::Green).add_attribute(Attribute::Bold),
       Cell::new(interpolated.as_ref()),
       Cell::new(source).fg(Color::Grey),
     ]);
@@ -102,7 +102,7 @@ fn main() -> Result<()> {
     set_value(&opts, &mut file).context("Cannot set value")?;
     write_current_configuration_file(&opts, &file).context("Cannot write configuration file")?;
   } else if let Some(ref name) = opts.name {
-    show_value(&opts, &name).context("Cannot read configuration files")?;
+    show_value(&opts, name).context("Cannot read configuration files")?;
   } else {
     list_values(&opts).context("Cannot read configuration files")?;
   }
