@@ -25,7 +25,7 @@ jobs:
           - name: Windows
             os: windows-latest
             artifact: yuna-windows
-            path: target/release/yuna-windows.exe
+            path: target/release/yuna.exe
           - name: MacOS (Apple Silicon)
             os: macos-latest
             artifact: yuna-macos-arm
