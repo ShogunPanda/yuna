@@ -31,10 +31,10 @@ jobs:
             artifact: yuna-macos-arm
             path: target/release/yuna
           - name: MacOS (Apple Intel)
-            os: macos-13
+            os: macos-15-intel
             artifact: yuna-macos-intel
             path: target/release/yuna
-    name: "Build (${{ matrix.name }})"
+    name: "Build ${{ matrix.name }}"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
