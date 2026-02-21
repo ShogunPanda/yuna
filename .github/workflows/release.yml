@@ -1,18 +1,42 @@
-name: Deploy
+name: Publish release
+
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
-concurrency:
-  group: deploy
-  cancel-in-progress: true
+    inputs:
+      version:
+        description: 'The version number to tag and release'
+        required: true
+        type: string
+      prerelease:
+        description: 'Release as pre-release'
+        required: false
+        type: boolean
+        default: false
+
 jobs:
-  sanity:
-    name: Sanity Check
-    runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_COLOR: always
+  build:
+    name: Build (${{ matrix.os }})
+    strategy:
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+            artifact: yuna-linux
+            path: target/release/yuna
+          - name: Windows
+            os: windows-latest
+            artifact: yuna-windows
+            path: target/release/yuna-windows.exe
+          - name: MacOS (Apple Silicon)
+            os: macos-latest
+            artifact: yuna-macos-arm
+            path: target/release/yuna
+          - name: MacOS (Apple Intel)
+            os: macos-13
+            artifact: yuna-macos-intel
+            path: target/release/yuna
+    name: 'Build (${{ matrix.name }})'
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -21,89 +45,33 @@ jobs:
         with:
           path: ~/.cargo
           key: cargo-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+      - name: Build executable
+        run: cargo build --release
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
         with:
-          profile: minimal
-          toolchain: stable
-          components: rustfmt, clippy
-      - name: Install cargo-make
-        run: cargo install cargo-make
-      - name: Check build
-        uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: prebuild
-  build:
-    name: Build (${{ matrix.os }})
-    needs: versionCheck
-    if: ${{ needs.versionCheck.outputs.build == 'true' }}
-    strategy:
-      matrix:
-        os:
-          - ubuntu
-          - macos
-          - windows
-    runs-on: ${{ matrix.os }}-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: aarch64-apple-darwin
-      - name: Build executable (${{ matrix.os }})
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
-      - name: Build executable (macos-arm)
-        if: ${{ matrix.os == 'macos' }}
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --target=aarch64-apple-darwin
-      - uses: actions/upload-artifact@v2
-        if: ${{ matrix.os == 'ubuntu' }}
-        with:
-          name: linux
-          path: ./target/release/yuna
-      - uses: actions/upload-artifact@v2
-        if: ${{ matrix.os == 'macos' }}
-        with:
-          name: macos-intel
-          path: ./target/release/yuna
-      - uses: actions/upload-artifact@v2
-        if: ${{ matrix.os == 'macos' }}
-        with:
-          name: macos-arm
-          path: ./target/aarch64-apple-darwin/release/yuna
-      - uses: actions/upload-artifact@v2
-        if: ${{ matrix.os == 'windows' }}
-        with:
-          name: windows
-          path: .\target\release\yuna.exe
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.path }}
+
   release:
     name: Release
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - name: Create release
+      - name: Prepare assets
         run: |
-          VERSION=$(cargo read-manifest | jq -r .version)
-          mkdir release
-          mv artifacts/linux/yuna release/yuna-linux
-          mv artifacts/macos-intel/yuna release/yuna-macos-intel
-          mv artifacts/macos-arm/yuna release/yuna-macos-arm
-          mv artifacts/windows/yuna.exe release/yuna-windows.exe
-          gh release create -t $VERSION v$VERSION release/*
+          mkdir -p release
+          mv artifacts/yuna-linux/yuna release/yuna-linux
+          mv artifacts/yuna-macos-intel/yuna release/yuna-macos-intel
+          mv artifacts/yuna-macos-arm/yuna release/yuna-macos-arm
+          mv artifacts/yuna-windows/yuna.exe release/yuna-windows.exe
+          chmod +x release/yuna-linux release/yuna-macos-intel release/yuna-macos-arm
+      - name: Create GitHub Release
+        run: |
+          gh release create "v${{ inputs.version }}" ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} release/*          
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
