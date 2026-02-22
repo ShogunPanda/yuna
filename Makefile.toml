@@ -21,6 +21,7 @@ config.skip_core_tasks = true
 [tasks.format]
   command = "cargo"
   args    = ["fmt"]
+  env     = { RUSTUP_TOOLCHAIN = "nightly" }
 
 [tasks.lint]
   command = "cargo"

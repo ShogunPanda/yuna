@@ -15,6 +15,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain
+        with:
+          toolchain: nightly
+          components: rustfmt, clippy
       - name: Restore cached dependencies
         uses: actions/cache@v3
         with:
