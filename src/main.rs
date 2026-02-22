@@ -1,15 +1,11 @@
-mod cli;
-mod config;
-mod serde;
+use std::borrow::Cow;
+use std::io::Error;
 
 use anyhow::{Context, Result};
 use clap::Parser;
 use comfy_table::{Attribute, Cell, Color, Table, modifiers::UTF8_ROUND_CORNERS};
-use std::borrow::Cow;
-use std::io::{Error, ErrorKind};
-
-use crate::cli::Args;
-use crate::config::{
+use yuna::cli::Args;
+use yuna::config::{
   delete_value, interpolate, read_configuration_files, read_current_configuration_file, set_value,
   write_current_configuration_file,
 };
@@ -53,15 +49,11 @@ fn list_values(opts: &Args) -> Result<(), Error> {
   let cwd_str = opts.cwd.display().to_string();
 
   for (name, (value, source)) in values.iter() {
-    let parent = source
-      .parent()
-      .ok_or_else(|| Error::new(ErrorKind::InvalidInput, "Invalid source"))?;
-
-    let source = if parent == opts.cwd {
+    let source = if source.parent() == Some(opts.cwd.as_path()) {
       source
         .file_name()
-        .ok_or_else(|| Error::new(ErrorKind::InvalidInput, "Invalid source"))?
-        .to_string_lossy()
+        .map(|f| f.to_string_lossy())
+        .unwrap_or_else(|| source.as_os_str().to_string_lossy())
     } else {
       Cow::Owned(
         source
@@ -93,15 +85,17 @@ fn list_values(opts: &Args) -> Result<(), Error> {
 fn main() -> Result<()> {
   let mut opts = match Args::try_parse() {
     Ok(opts) => opts,
-    Err(e) => match e.kind() {
-      clap::error::ErrorKind::DisplayVersion => {
-        println!("{}", env!("CARGO_PKG_VERSION"));
-        return Ok(());
+    Err(e) => {
+      match e.kind() {
+        clap::error::ErrorKind::DisplayVersion => {
+          println!("{}", env!("CARGO_PKG_VERSION"));
+          return Ok(());
+        }
+        _ => {
+          e.exit();
+        }
       }
-      _ => {
-        e.exit();
-      }
-    },
+    }
   };
 
   opts.cwd = std::env::current_dir()?;

@@ -1,9 +1,10 @@
+use std::{collections::BTreeMap, path::PathBuf};
+
 use serde::ser::{SerializeMap, SerializeSeq};
 use serde::{
   Serialize, Serializer,
   de::{self, Deserializer, MapAccess, SeqAccess, Visitor},
 };
-use std::{collections::BTreeMap, path::PathBuf};
 
 pub type Mapping = BTreeMap<String, ValueWithSource>;
 pub type Sequence = Vec<ValueWithSource>;
@@ -30,13 +31,9 @@ pub enum ValueWithSource {
 }
 
 impl ValueWithSource {
-  pub fn is_mapping(&self) -> bool {
-    matches!(self, ValueWithSource::Mapping(_))
-  }
+  pub fn is_mapping(&self) -> bool { matches!(self, ValueWithSource::Mapping(_)) }
 
-  pub fn is_sequence(&self) -> bool {
-    matches!(self, ValueWithSource::Sequence(_))
-  }
+  pub fn is_sequence(&self) -> bool { matches!(self, ValueWithSource::Sequence(_)) }
 
   pub fn as_sequence_mut(&mut self) -> Option<&mut Sequence> {
     match self {
@@ -111,12 +108,20 @@ struct ConfigFileVisitor {
   source: PathBuf,
 }
 
+pub fn config_file_expected_message() -> String {
+  struct Expected(ConfigFileVisitor);
+
+  impl std::fmt::Display for Expected {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { self.0.expecting(f) }
+  }
+
+  format!("{}", Expected(ConfigFileVisitor { source: PathBuf::new() }))
+}
+
 impl<'de> Visitor<'de> for ConfigFileVisitor {
   type Value = ValueWithSource;
 
-  fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    write!(f, "any YAML value")
-  }
+  fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { write!(f, "any YAML value") }
 
   fn visit_bool<E: de::Error>(self, v: bool) -> Result<Self::Value, E> {
     Ok(ValueWithSource::Scalar {
@@ -158,9 +163,7 @@ impl<'de> Visitor<'de> for ConfigFileVisitor {
     })
   }
 
-  fn visit_unit<E: de::Error>(self) -> Result<Self::Value, E> {
-    Ok(ValueWithSource::Null)
-  }
+  fn visit_unit<E: de::Error>(self) -> Result<Self::Value, E> { Ok(ValueWithSource::Null) }
 
   fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
     let mut items = Vec::new();

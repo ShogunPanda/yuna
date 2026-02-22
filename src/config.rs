@@ -1,12 +1,13 @@
-use anyhow::Result;
-use regex::Regex;
-use serde::de::DeserializeSeed;
 use std::{
   collections::HashSet,
   io::{Error, ErrorKind},
   path::{Path, PathBuf},
   sync::LazyLock,
 };
+
+use anyhow::Result;
+use regex::Regex;
+use serde::de::DeserializeSeed;
 
 use crate::cli::Args;
 use crate::serde::{ConfigFile, FlattenValues, Mapping, ScalarType, ValueWithSource};
@@ -69,12 +70,10 @@ pub fn set_value(opts: &Args, config: &mut ValueWithSource) -> Result<(), Error>
     .name
     .as_ref()
     .ok_or_else(|| Error::new(ErrorKind::InvalidInput, "Variable name is required for set operation"))?;
-  let mut tokens = name.split('.').peekable();
+  let mut tokens = name.split_terminator('.').peekable();
   let new_value = ValueWithSource::Scalar {
     value: opts.value.join(" "),
-    source: std::env::current_dir()
-      .unwrap_or_else(|_| PathBuf::new())
-      .join(&opts.config),
+    source: std::env::current_dir().unwrap_or_default().join(&opts.config),
     original_type: ScalarType::String,
   };
 
@@ -140,7 +139,7 @@ pub fn delete_value(opts: &Args, config: &mut ValueWithSource) -> Result<(), Err
       "Variable name is required for delete operation",
     )
   })?;
-  let mut tokens = name.split('.').peekable();
+  let mut tokens = name.split_terminator('.').peekable();
 
   while let Some(token) = tokens.next() {
     let is_last = tokens.peek().is_none();
@@ -218,7 +217,8 @@ pub fn find_configuration_files(opts: &Args) -> Result<Vec<PathBuf>, Error> {
 
   let mut current = PathBuf::new();
 
-  // At each level, see if there is a file. We start from the root to the current directory
+  // At each level, see if there is a file. We start from the root to the current
+  // directory
   for component in cwd.components() {
     current = current.join(component);
     let current_file = current.join(file);
@@ -231,8 +231,8 @@ pub fn find_configuration_files(opts: &Args) -> Result<Vec<PathBuf>, Error> {
   Ok(files)
 }
 
-pub fn read_configuration_file(config: &str) -> Result<ValueWithSource, Error> {
-  let file = Path::new(config);
+pub fn read_configuration_file(config: impl AsRef<Path>) -> Result<ValueWithSource, Error> {
+  let file = config.as_ref();
 
   match std::fs::read_to_string(file) {
     Ok(c) => {
@@ -243,10 +243,12 @@ pub fn read_configuration_file(config: &str) -> Result<ValueWithSource, Error> {
 
       match config.deserialize(deserializer) {
         Ok(m) => Ok(m),
-        Err(e) => Err(Error::new(
-          ErrorKind::InvalidData,
-          format!("File {} contains invalid YAML: {}", file.display(), e),
-        )),
+        Err(e) => {
+          Err(Error::new(
+            ErrorKind::InvalidData,
+            format!("File {} contains invalid YAML: {}", file.display(), e),
+          ))
+        }
       }
     }
     Err(e) if ErrorKind::NotFound == e.kind() => Ok(ValueWithSource::Mapping(Mapping::new())),
@@ -259,7 +261,7 @@ pub fn read_configuration_files(opts: &Args) -> Result<FlattenValues, Error> {
   let mut tree_values = ValueWithSource::Mapping(Mapping::new());
 
   for file in files {
-    let current = read_configuration_file(&file.display().to_string())?;
+    let current = read_configuration_file(&file)?;
     merge_values(&mut tree_values, &current);
   }
 
@@ -271,21 +273,16 @@ pub fn read_configuration_files(opts: &Args) -> Result<FlattenValues, Error> {
 pub fn read_current_configuration_file(opts: &Args) -> Result<ValueWithSource, Error> {
   let cwd = std::env::current_dir()?;
   let path = cwd.join(Path::new(&opts.config));
-
-  let path_str = path.to_str().ok_or_else(|| {
-    Error::new(
-      ErrorKind::InvalidData,
-      format!("Configuration file path contains invalid UTF-8: {:?}", path),
-    )
-  })?;
-
-  read_configuration_file(path_str)
+  read_configuration_file(path)
 }
 
 pub fn write_current_configuration_file(opts: &Args, config: &ValueWithSource) -> Result<(), Error> {
   let cwd = std::env::current_dir()?;
   let path = cwd.join(&opts.config);
 
-  let content = serde_yml::to_string(config).map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
+  let content = match serde_yml::to_string(config) {
+    Ok(content) => content,
+    Err(e) => return Err(Error::new(ErrorKind::InvalidData, e)),
+  };
   std::fs::write(&path, content)
 }
