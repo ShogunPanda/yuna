@@ -33,7 +33,9 @@ config.skip_core_tasks = true
 [tasks.coverage]
   command = "cargo"
   args    = ["llvm-cov", "--summary-only", "--branch"]
+  env     = { RUSTUP_TOOLCHAIN = "nightly" }
 
 [tasks."coverage:html"]
   command = "cargo"
   args    = ["llvm-cov", "--html", "--output-dir=coverage", "--branch"]
+  env     = { RUSTUP_TOOLCHAIN = "nightly" }
