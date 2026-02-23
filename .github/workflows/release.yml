@@ -38,7 +38,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
       - name: Restore cached dependencies
         uses: actions/cache@v3
         with:
@@ -48,7 +48,9 @@ jobs:
             target
           key: cargo-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Build executable
-        run: cargo build --release
+        run: |
+          cargo run -- update ${{ inputs.version }}
+          cargo build --release
       - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
@@ -57,25 +59,56 @@ jobs:
 
   release:
     name: Release
+    environment: main
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+      - name: Setup cargo OIDC
+        uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+      - name: Configure git
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
       - name: Prepare assets
         run: |
-          mkdir -p release
-          mv artifacts/yuna-linux/yuna release/yuna-linux
-          mv artifacts/yuna-macos-intel/yuna release/yuna-macos-intel
-          mv artifacts/yuna-macos-arm/yuna release/yuna-macos-arm
-          mv artifacts/yuna-windows/yuna.exe release/yuna-windows.exe
-          chmod +x release/yuna-linux release/yuna-macos-intel release/yuna-macos-arm
-      - name: Create GitHub Release
+          mkdir -p /tmp/release
+          mv artifacts/yuna-linux/yuna /tmp/release/yuna-linux
+          mv artifacts/yuna-macos-intel/yuna /tmp/release/yuna-macos-intel
+          mv artifacts/yuna-macos-arm/yuna /tmp/release/yuna-macos-arm
+          mv artifacts/yuna-windows/yuna.exe /tmp/release/yuna-windows.exe
+          chmod +x /tmp/release/yuna-linux /tmp/release/yuna-macos-intel /tmp/release/yuna-macos-arm
+      - name: Create release
         run: |
-          gh release create "v${{ inputs.version }}" -t "${{ inputs.version }}" ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} release/*
+          curl -o /tmp/bin/cambi -sSL https://github.com/ShogunPanda/cambi/releases/latest/download/cambi-linux
+          chmod +x /tmp/bin/cambi
+          /tmp/bin/cambi changelog ${{ inputs.version }}
+          /tmp/bin/cambi update ${{ inputs.version }}
+          /tmp/bin/cambi release -n > /tmp/release-notes.txt
+      - name: Publish on crates.io
+        run: |
+          cargo generate-lockfile
+          git add Cargo.toml Cargo.lock CHANGELOG.md
+          git commit -m "chore: Updated version."
+          git tag -f "v${{ inputs.version }}"
+          cargo publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+      - name: Publish on GitHub
+        run: |
+          git push origin && git push origin -f --tags
+          gh release create "v${{ inputs.version }}" -t "${{ inputs.version }}" ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} -F /tmp/release-notes.txt /tmp/release/*
+        env:
+          GH_TOKEN: ${{ github.token }}
