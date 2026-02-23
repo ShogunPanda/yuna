@@ -92,11 +92,11 @@ jobs:
           chmod +x /tmp/release/yuna-linux /tmp/release/yuna-macos-intel /tmp/release/yuna-macos-arm
       - name: Create release
         run: |
-          curl -o /tmp/bin/cambi -sSL https://github.com/ShogunPanda/cambi/releases/latest/download/cambi-linux
-          chmod +x /tmp/bin/cambi
-          /tmp/bin/cambi changelog ${{ inputs.version }}
-          /tmp/bin/cambi update ${{ inputs.version }}
-          /tmp/bin/cambi release -n > /tmp/release-notes.txt
+          curl -o /tmp/cambi -sSL https://github.com/ShogunPanda/cambi/releases/latest/download/cambi-linux
+          chmod +x /tmp/cambi
+          /tmp/cambi changelog ${{ inputs.version }}
+          /tmp/cambi update ${{ inputs.version }}
+          /tmp/cambi release -n > /tmp/release-notes.txt
       - name: Publish on crates.io
         run: |
           cargo generate-lockfile
