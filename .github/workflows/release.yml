@@ -49,7 +49,9 @@ jobs:
           key: cargo-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Build executable
         run: |
-          cargo run -- update ${{ inputs.version }}
+          curl -o /tmp/cambi -sSL https://github.com/ShogunPanda/cambi/releases/latest/download/cambi-linux
+          chmod +x /tmp/cambi
+          cambi update ${{ inputs.version }}
           cargo build --release
       - name: Upload executable
         uses: actions/upload-artifact@v4
