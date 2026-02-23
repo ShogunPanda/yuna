@@ -51,7 +51,7 @@ jobs:
         run: |
           curl -o /tmp/cambi -sSL https://github.com/ShogunPanda/cambi/releases/latest/download/cambi-linux
           chmod +x /tmp/cambi
-          cambi update ${{ inputs.version }}
+          /tmp/cambi update ${{ inputs.version }}
           cargo build --release
       - name: Upload executable
         uses: actions/upload-artifact@v4
