@@ -1,3 +1,8 @@
+### 2026-02-23 / 0.4.0
+
+- feat: Switch to cambi for the release.
+- fix: Fixed release workflow.
+
 ### 2026-02-21 / 0.3.1
 
 - fix: Correctly exit with non-zero code on invalid options.
