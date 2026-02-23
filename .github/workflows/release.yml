@@ -50,7 +50,7 @@ jobs:
       - name: Build executable
         run: |
           curl -o /tmp/cambi -sSL https://github.com/ShogunPanda/cambi/releases/latest/download/cambi-linux
-          chmod +x /tmp/cambi
+          chmod a+x /tmp/cambi
           /tmp/cambi update ${{ inputs.version }}
           cargo build --release
       - name: Upload executable
