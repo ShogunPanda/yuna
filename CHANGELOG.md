@@ -1,3 +1,10 @@
+### 2026-02-23 / 0.4.1
+
+- fix: Fixed release workflow.
+- fix: Fixed release workflow.
+- fix: Fixed release workflow.
+- fix: Fixed release workflow.
+
 ### 2026-02-23 / 0.4.0
 
 - feat: Switch to cambi for the release.
