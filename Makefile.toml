@@ -1,8 +1,5 @@
 config.skip_core_tasks = true
 
-[tasks.prebuild]
-  dependencies = ["format", "lint"]
-
 [tasks.build]
   command = "cargo"
   args    = ["build"]
@@ -22,8 +19,9 @@ config.skip_core_tasks = true
   env     = { RUSTUP_TOOLCHAIN = "nightly" }
 
 [tasks.release]
-  command = "cargo"
-  args    = ["build", "--release"]
+  dependencies = ["check"]
+  command      = "cargo"
+  args         = ["build", "--release"]
 
 [tasks.check]
   dependencies = ["format", "lint"]
@@ -31,6 +29,11 @@ config.skip_core_tasks = true
 [tasks.format]
   command = "cargo"
   args    = ["fmt", "--check"]
+  env     = { RUSTUP_TOOLCHAIN = "nightly" }
+
+[tasks."format:fix"]
+  command = "cargo"
+  args    = ["fmt"]
   env     = { RUSTUP_TOOLCHAIN = "nightly" }
 
 [tasks.lint]
